@@ -89,6 +89,7 @@ impl Renderer {
             source: wgpu::ShaderSource::Wgsl(include_str!("fragment.wgsl").into())
         });
 
+        // Bind Groups
         let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("Texture bind group layout"),
             entries: &[
@@ -111,48 +112,17 @@ impl Renderer {
             ],
         });
 
+        // ---
+
         let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render Pipeline Layout"),
-            bind_group_layouts: &[],
+            bind_group_layouts: &[
+                //&texture_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &vertex_shader,
-                entry_point: "vs_main",
-                buffers: &[
-                    Vertex::desc()
-                ],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &fragment_shader,
-                entry_point: "fs_main",
-                targets: &[wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                }],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                polygon_mode: wgpu::PolygonMode::Fill,
-                unclipped_depth: false,
-                conservative: false,
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-        });
+        let render_pipeline = Renderer::create_render_pipeline(&device, &render_pipeline_layout, &config.format, &fragment_shader, &vertex_shader);
 
         let vertex_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
@@ -202,27 +172,39 @@ impl Renderer {
 
     }
 
-    // TODO Rework fragment shader swapping
     pub fn swap_fragment(&mut self, shader_string: &str) {
         let fragment_shader = self.device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(shader_string.into())
         });
-        let render_pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let render_pipeline = Renderer::create_render_pipeline(&self.device, &self.render_pipeline_layout, &self.config.format, &fragment_shader, &self.vertex_shader);
+
+        self.render_pipeline = render_pipeline;
+    }
+
+
+    fn create_render_pipeline(
+        device: &wgpu::Device,
+        layout: &wgpu::PipelineLayout,
+        format: &wgpu::TextureFormat,
+        fragment: &wgpu::ShaderModule, 
+        vertex: &wgpu::ShaderModule
+    ) -> wgpu::RenderPipeline {
+        device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
-            layout: Some(&self.render_pipeline_layout),
+            layout: Some(&layout),
             vertex: wgpu::VertexState {
-                module: &self.vertex_shader,
+                module: &vertex,
                 entry_point: "vs_main",
                 buffers: &[
                     Vertex::desc()
                 ],
             },
             fragment: Some(wgpu::FragmentState {
-                module: &fragment_shader,
+                module: &fragment,
                 entry_point: "fs_main",
                 targets: &[wgpu::ColorTargetState {
-                    format: self.config.format,
+                    format: *format,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 }],
@@ -243,9 +225,7 @@ impl Renderer {
                 alpha_to_coverage_enabled: false,
             },
             multiview: None,
-        });
-
-        self.render_pipeline = render_pipeline;
+        })
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {

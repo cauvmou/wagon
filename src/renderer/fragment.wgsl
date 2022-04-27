@@ -6,5 +6,7 @@ struct VertexOutput {
 
 [[stage(fragment)]]
 fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    return vec4<f32>(0.0, in.uv, 1.0);
+    let result = vec3<f32>(in.uv, 0.0);
+    //let result = pow(result, vec3<f32>(1.0/2.2));
+    return vec4<f32>(result, 1.0);
 }
