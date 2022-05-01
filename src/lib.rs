@@ -9,7 +9,7 @@ use crate::renderer::Renderer;
 #[cfg_attr(target_arch="wasm32", wasm_bindgen(start))]
 pub async fn run() {
 
-    // Initialize Wasm logging and hook the default panic handler to output to browser-console.
+    // Initialize Wasm logging and hook the default panic handler to the output of the browser-console.
     cfg_if::cfg_if! {
         if #[cfg(target_arch="wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -50,7 +50,7 @@ pub async fn run() {
                     match event {
                         WindowEvent::Resized(size) => renderer.resize(size),
                         WindowEvent::KeyboardInput { device_id, input, is_synthetic } => {
-
+                            
                         },
                         WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size } => renderer.resize(*new_inner_size),
                         _ => {}

@@ -73,12 +73,13 @@ impl Renderer {
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface.get_preferred_format(&adapter).unwrap(), //wgpu::TextureFormat::Bgra8Unorm,
+            format: wgpu::TextureFormat::Bgra8Unorm,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
         };
         println!("Preffered Texture format: {:?}", config.format);
+        
 
         surface.configure(&device, &config);
 
